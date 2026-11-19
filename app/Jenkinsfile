@@ -1,1 +1,63 @@
-app/JenkinsfileS
+
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'inventario:1.0.0'
+    }
+
+    stages {
+
+        stage('Pruebas unitarias') {
+            steps {
+                dir('app') {
+                    sh '''
+                        python3 -m pip install pytest
+                        python3 -m pytest tests/ -v
+                    '''
+                }
+            }
+        }
+
+        stage('Construir imagen') {
+            steps {
+                sh '''
+                    docker build -t inventario:1.0.0 ./app
+                '''
+            }
+        }
+
+        stage('Prueba de humo') {
+            steps {
+                sh '''
+                    docker run -d --name inventario-test -p 8000:8000 inventario:1.0.0
+
+                    sleep 5
+
+                    RESULT=$(docker exec inventario-test python -c "
+import urllib.request
+print(urllib.request.urlopen('http://localhost:8000/').read().decode())
+")
+
+                    echo "$RESULT"
+
+                    docker rm -f inventario-test
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline de Inventario finalizado.'
+        }
+
+        success {
+            echo 'Todas las etapas fueron ejecutadas correctamente.'
+        }
+
+        failure {
+            echo 'El pipeline presentó un error. Revisar Console Output.'
+        }
+    }
+}
