@@ -3,18 +3,23 @@ pipeline {
     agent any
 
     stages {
-        stage('Pruebas unitarias') {
-            steps {
-                dir('app') {
-                    sh '''
-                        python3 -m venv .venv
-                        .venv/bin/python -m pip install --upgrade pip
-                        .venv/bin/pip install pytest fastapi uvicorn httpx
-                        .venv/bin/python -m pytest tests/ -v
-                    '''
+        
+            stage('Pruebas unitarias') {
+                steps {
+                    dir('app') {
+                        sh '''
+                            python3 -m venv .venv
+                            .venv/bin/python -m pip install --upgrade pip
+                            .venv/bin/pip install pytest fastapi uvicorn httpx
+
+                            export PYTHONPATH="$WORKSPACE/app/src"
+
+                            .venv/bin/python -m pytest tests/ -v
+                        '''
+                    }
                 }
             }
-        }
+
 
         stage('Construir imagen') {
             steps {
