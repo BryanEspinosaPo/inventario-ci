@@ -1,19 +1,16 @@
 
-FROM jenkins/jenkins:lts-jdk21
+FROM python:3.12-slim
 
-USER root
+WORKDIR /app
 
-# Instalar Python y herramientas necesarias
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
 
-USER jenkins
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar plugins de Jenkins
-COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
+COPY src/ ./src/
 
-RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
+ENV PYTHONPATH=/app/src
+
+EXPOSE 8000
+
+CMD ["uvicorn", "inventario.main:app", "--host", "0.0.0.0", "--port", "8000"]
