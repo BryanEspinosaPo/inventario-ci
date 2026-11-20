@@ -1,18 +1,19 @@
 
-FROM python:3.12-slim
+FROM jenkins/jenkins:lts-jdk21
 
-WORKDIR /app
+USER root
 
-# Instalar dependencias
-COPY requirements.txt .
+# Instalar Python y herramientas necesarias
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt
+USER jenkins
 
-# Copiar el código de la aplicación
-COPY src/ ./src/
+# Instalar plugins de Jenkins
+COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 
-# Puerto de la aplicación
-EXPOSE 8000
-
-# Iniciar la aplicación
-CMD ["python", "-m", "inventario.main"]
+RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
